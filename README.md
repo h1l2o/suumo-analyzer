@@ -1,36 +1,66 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# SUUMO アナライザー
 
-## Getting Started
+SUUMO の物件ページ URL を入力すると、ローカル LLM が掲載情報の空白・組み合わせから**見落としやすいリスク**と**具体的な確認事項**を日本語で出力するツールです。
 
-First, run the development server:
+「築年数が古い」「初期費用が高い」といった掲載値の言い換えではなく、管理費未記載の意味・木造最上階の夏季リスク・礼金と建物種別の組み合わせから読み取れる立退きリスクなど、不動産の経験がないと気づきにくい観点を指摘します。
+
+## スタック
+
+| 役割 | 技術 |
+|------|------|
+| フレームワーク | Next.js 15 (App Router) |
+| スクレイピング | cheerio（サーバーサイド静的 HTML パース）|
+| LLM | Ollama + qwen3:8b（ローカル実行）|
+| 言語 | TypeScript (strict) |
+| スタイリング | Tailwind CSS |
+| テスト | Jest |
+
+## 前提条件
+
+- Node.js 18 以上
+- [Ollama](https://ollama.com/) がインストール済みで起動していること
 
 ```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+# qwen3:8b を未取得の場合
+ollama pull qwen3:8b
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+## セットアップ
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+```bash
+git clone https://github.com/h1l2o/suumo-analyzer.git
+cd suumo-analyzer
+npm install
+npm run dev
+```
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+ブラウザで [http://localhost:3000](http://localhost:3000) を開き、SUUMO の物件詳細 URL を入力してください。
 
-## Learn More
+## 使い方
 
-To learn more about Next.js, take a look at the following resources:
+1. SUUMO の物件詳細ページの URL をコピー（例: `https://suumo.jp/chintai/jnc_XXXXXXXXXX/`）
+2. 入力欄に貼り付けて「分析する」をクリック
+3. 物件サマリー・懸念点・確認推奨事項が表示されます
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+> **Note:** 分析には Ollama（`localhost:11434`）が必要です。起動していない場合はエラーが表示されます。
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+## アーキテクチャ
 
-## Deploy on Vercel
+```
+ブラウザ
+  └─ POST /api/analyze (Next.js Route Handler)
+       ├─ scraper.ts  → fetch + cheerio で HTML をパース → 構造化テキスト
+       └─ analyzer.ts → Ollama REST API (qwen3:8b) → JSON 形式の分析結果
+```
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+SUUMO 固有のテーブルクラス（`property_view_table` / `data_table`）を対象に取得することで、検索フィルターや関連物件リストのノイズを除外しています。
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+## テスト
+
+```bash
+npm test
+```
+
+## 設計判断の記録
+
+技術選定・アーキテクチャの判断根拠は [`docs/RATIONALE.md`](docs/RATIONALE.md) にまとめています。
