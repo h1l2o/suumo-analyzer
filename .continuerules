@@ -1,0 +1,16 @@
+# suumo-analyzer プロジェクト
+
+## 概要
+SUUMO の賃貸物件 URL を貼ると懸念点・確認推奨事項を出す Web アプリ。
+
+## 技術スタック
+- Next.js (App Router) + TypeScript
+- スクレイピング: cheerio
+- LLM: Ollama localhost:11434 / qwen3:8b
+- スタイル: Tailwind CSS
+
+## ルール
+- スクレイピング対象は SUUMO のみ（suumo.jp ドメインのみ受け付ける）
+- LLM は Ollama 固定。外部 API キーは使わない
+- 認証・保存・複数物件比較は実装しない（スコープ外）
+- Ollama のレスポンスは必ず JSON パース → 失敗時 1 回リトライ
