@@ -27,7 +27,9 @@ function isValidResult(parsed: unknown): parsed is AnalysisResult {
   return (
     typeof p['summary'] === 'string' &&
     Array.isArray(p['concerns']) &&
-    Array.isArray(p['checkItems'])
+    (p['concerns'] as unknown[]).every((c) => typeof c === 'string') &&
+    Array.isArray(p['checkItems']) &&
+    (p['checkItems'] as unknown[]).every((c) => typeof c === 'string')
   )
 }
 
